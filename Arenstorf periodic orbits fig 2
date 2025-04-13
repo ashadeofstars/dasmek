@@ -1,0 +1,51 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp
+
+# Parameter sistem (rasio massa)
+alpha = 0.012277471  # Rasio massa untuk sistem Bumi-Bulan
+
+# Definisi persamaan diferensial untuk masalah tiga badan terbatas
+def restricted_three_body(t, u, alpha):
+    x, y, vx, vy = u  # Posisi dan kecepatan dalam sistem koordinat berotasi
+    mu = alpha
+    mu1 = 1.0 - mu
+
+    # Jarak ke dua massa utama
+    d1 = np.sqrt((x + mu)**2 + y**2)**3
+    d2 = np.sqrt((x - mu1)**2 + y**2)**3
+
+    # Persamaan gerak
+    dxdt = vx
+    dydt = vy
+    dvxdt = x + 2 * vy - mu1 * (x + mu) / d1 - mu * (x - mu1) / d2
+    dvydt = y - 2 * vx - mu1 * y / d1 - mu * y / d2
+
+    return [dxdt, dydt, dvxdt, dvydt]
+
+# Kondisi awal untuk orbit Arenstorf (contoh dari jurnal)
+x0 = 0.994
+y0 = 0.0
+vx0 = 0.0
+vy0 = -2.00158510637908252240537862224  # Kecepatan awal untuk orbit periodik
+
+# Waktu simulasi
+t_span = (0, 20)  # Rentang waktu
+t_eval = np.linspace(t_span[0], t_span[1], 10000)  # Titik evaluasi
+
+# Solusi numerik menggunakan solve_ivp
+sol = solve_ivp(restricted_three_body, t_span, [x0, y0, vx0, vy0],
+                args=(alpha,), t_eval=t_eval, rtol=1e-12, atol=1e-12)
+
+# Plot hasil untuk orbit Arenstorf
+plt.figure(figsize=(8, 8))
+plt.plot(sol.y[0], sol.y[1], label="Orbit Arenstorf", color="black")
+plt.scatter([-alpha], [0], color="red", label="Massa 1 (Bumi)")
+plt.scatter([1 - alpha], [0], color="green", label="Massa 2 (Bulan)")
+plt.title("Orbit Arenstorf dalam Sistem Bumi-Bulan", fontsize=14)
+plt.xlabel("Posisi x (dalam satuan R)", fontsize=12)
+plt.ylabel("Posisi y (dalam satuan R)", fontsize=12)
+plt.legend()
+plt.grid(True)
+plt.axis("equal")
+plt.show()
