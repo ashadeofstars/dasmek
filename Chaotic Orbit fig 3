@@ -1,0 +1,55 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp
+
+# Parameter alpha sesuai Figure 4 (alpha = 0.5)
+alpha = 0.5
+
+# Sistem diferensial berdasarkan persamaan (46) dan (47) jurnal
+def cr3bp_dimless(t, U):
+    u, v, up, vp = U
+
+    d1 = np.sqrt((u + alpha)**2 + v**2)
+    d2 = np.sqrt((u - 1 + alpha)**2 + v**2)
+
+    dup = - (1 - alpha) * (u + alpha) / d1**3 - alpha * (u - 1 + alpha) / d2**3 + u + 2 * vp
+    dvp = - (1 - alpha) * v / d1**3 - alpha * v / d2**3 + v - 2 * up
+
+    return [up, vp, dup, dvp]
+
+# Kondisi awal sesuai jurnal: x = 1, y = 0, x' = 0, y' = 0
+U0 = [1.0, 0.0, 0.0, 0.0]
+
+# Waktu simulasi dalam satuan tak berdimensi (tau)
+t_span = (0, 40)
+t_eval = np.linspace(t_span[0], t_span[1], 20000)
+
+# Integrasi numerik
+sol = solve_ivp(cr3bp_dimless, t_span, U0, t_eval=t_eval, rtol=1e-10, atol=1e-12)
+
+# Plot hasil orbit
+plt.figure(figsize=(6,6))
+plt.plot(sol.y[0], sol.y[1], color='black', linewidth=0.6)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Chaotic Orbit (α = 0.5)")
+plt.grid(True)
+plt.axis("equal")
+
+# Plot posisi massa utama 
+plt.scatter([-alpha], [0], color='crimson', s=150, label='Primary Mass (M1)', zorder=3)
+plt.scatter([1-alpha], [0], color='royalblue', s=100, label='Secondary Mass (M2)', zorder=3)
+plt.text(-alpha, 0.1, 'M1', ha='center', va='bottom', color='crimson', fontsize=12)
+plt.text(1-alpha, 0.1, 'M2', ha='center', va='bottom', color='royalblue', fontsize=12)
+
+# Garis putus-putus untuk L4 dan L5
+theta = np.linspace(0, 2*np.pi, 100)
+plt.plot(0.5-alpha + 0.5*np.cos(theta), 0.5*np.sqrt(3)*np.sin(theta), 
+         '--', color='gray', linewidth=0.5, alpha=0.5)
+
+plt.xlabel("x (dimensionless)", fontsize=12)
+plt.ylabel("y (dimensionless)", fontsize=12)
+plt.title(f"Restricted Three-Body Problem\nChaotic Orbit (α={alpha}, T=50)", fontsize=14)
+plt.legend(loc='upper right', fontsize=10)
+plt.grid(True, alpha=0.3)
+plt.show()
